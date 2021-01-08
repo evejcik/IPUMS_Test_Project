@@ -1,6 +1,6 @@
 ---
 title: "SDS 291 Revised Project Proposal"
-author: "Emma Vejcik, Miranda Wu, Alexis Reveron-Sousa"
+author: "Emma Vejcik"
 date: "11/20/2020"
 output: html_document
 ---
