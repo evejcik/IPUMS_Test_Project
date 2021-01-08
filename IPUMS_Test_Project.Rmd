@@ -1,0 +1,236 @@
+---
+title: "SDS 291 Revised Project Proposal"
+author: "Emma Vejcik, Miranda Wu, Alexis Reveron-Sousa"
+date: "11/20/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+library(ggplot2)
+library(ipumsr)
+library(dplyr)
+ddi <- read_ipums_ddi("~/Desktop/SDS_descriptions.xml")
+data <- read_ipums_micro(ddi)
+```
+
+
+```{r, include=FALSE}
+data <- filter(data, HINOTCOVE %in% c(1,2))
+```
+
+```{r, include=FALSE}
+filtered_data <- filter(data, MORTSTAT == 1)
+```
+
+```{r, include=FALSE}
+filtered_data <- filtered_data %>%
+  mutate(filtered_data, Lifespan = MORTDODY-BIRTHYR)%>%
+  filter(Lifespan >= 21)
+```
+
+```{r, include=FALSE}
+filtered_data <- filtered_data %>%
+  select(YEAR, NHISHID,PERNUM, NHISPID,HHX, FMX, BIRTHYR, EDUC,HINOTCOVE,MORTSTAT,MORTDODY,Lifespan)
+```
+
+```{r, include=FALSE}
+filtered_data$HINOTCOVE <- factor(filtered_data$HINOTCOVE,
+labels = c("Yes", "No")
+)
+```
+
+```{r, include=FALSE}
+filtered_data <- filtered_data %>%
+  filter(!EDUC %in% c(0,997,998,999,996,604))%>%
+  mutate(education_category = recode(as.numeric(EDUC),
+                                     `100` = "No_HS",
+                                     `101` = "No_HS",
+                                     `102` = "No_HS",
+                                     `103` = "No_HS",
+                                     `104` = "No_HS",
+                                     `105` = "No_HS",
+                                     `106` = "No_HS",
+                                     `107` = "No_HS",
+                                     `108` = "No_HS",
+                                     `109` = "No_HS",
+                                     `200` = "No_HS",
+                                     `201` = "No_HS",
+                                     `202` = "No_HS",
+                                     `203` = "No_HS",
+                                     `204` = "No_HS",
+                                     `300` = "HS",
+                                     `301` = "HS",
+                                     `302` = "HS",
+                                     `303` = "HS",
+                                     `304` = "HS",
+                                     `400` = "SomeCollege_NoDeg",
+                                     `401` = "SomeCollege_NoDeg",
+                                     `402` = "College",
+                                     `403` = "College",
+                                     `500` = "College",
+                                     `600` = "Advanced",
+                                     `601` = "Advanced",
+                                     `602` = "Advanced",
+                                     `603` = "Advanced"
+                                     ))%>%
+  mutate(education_category = factor(education_category, 
+                                     levels = c("No_HS","HS","SomeCollege_NoDeg","College", "Advanced")))
+```
+
+
+## Effects of Health Insurance Coverage and Education Level on Lifespan
+ 
+ 
+**Purpose and Hypotheses:**
+
+This project focuses on the relationship between lifespan, status of health insurance, and education level. There is evidence that people with higher levels of education live longer, which may also be exacerbated with the provision of health insurance, which is also a more likely characteristic of those with higher levels of education. 
+
+The primary hypothesis is that those with a higher level of attained education have a longer lifespan. The secondary hypothesis is that those with higher levels of education will more likely have health insurance than those with lower levels of education.
+ 
+**Data**
+
+This study will use data from IPUMS-MEPS. The Medical Expenditure Survey (MEPS) set of large-scale surveys of families and individuals, their medical providers, and employers across the United States. MEPS is the most complete source of data on the cost and use of health care and health insurance coverage. MEPS provides data from the longitudinal survey of U.S. health care expenditures and utilization. We will pool data only from the year 2014 in order to make our study more succinct. 
+ 
+**Population**
+
+MEPS is a nationally representative, longitudinal survey. Data is collected from individuals over the course of 2.5 years through interviews. 
+Our project only uses data from 2014. Since our study is concentrated on one year alone, we know that the independence assumption is not violated with repeated measures on the same person. 
+The population of inference will be the US adult population. Since we are only interested in adults -- those with the ability to register themselves for health insurance coverage -- we will filter the data to include only those who are over the age of 21. 
+ 
+
+**Response Variable**
+
+The response variable will be the measure of lifespan in years, as in how long an individual has lived. We will model this variable directly.
+
+We will create a new variable from these responses that indicates an individual's lifespan in years. The new variable, Lifespan will be created by subtracting birth year from year of death to find out how long a person lived (in years)
+
+Lifespan = MORTDODY-BIRTHYR
+
+We will use both multiple and simple linear regressions to model this outcome.
+ 
+**Explanatory Variables:**
+
+As stated previously, we will restrict this analysis to only adults (those who have lived 21+ years).
+
+Primary hypothesis:
+The primary hypotheses will use a variable indicating highest education level attained. We will create this variable by sorting the education variable into 5 categories.
+
+"No_HS" = Grade 8 or less 
+  "HS" = Highschool diploma, GED, or GED equivalent
+  "SomeCollege_NoDeg" = Some college, no degree, no 4yr degree
+  "College" = AA Degree, Bachelor's Degree
+  "Advanced" = Master's Degree and higher
+
+We will filter out missing values, such as the unknown education levels, other degrees or NIU.
+
+The test of our hypothesis will be: H0:β1=0, HA:β1≠0 from the regression model: lm(Lifespan) = β0 + B1(HS) + B2(SomeCollege_NoDeg) + B3(College) + B4(Advanced) + β′X, where β′X represents a vector of covariates included to control for potential confounding variables. We expect every category to be different and distinct from "No HS". They are described below.
+
+Secondary hypotheses:
+
+Our secondary hypothesis is that those with higher levels of education will more likely have health insurance than those with lower levels of education. 
+
+Health insurance coverage will be represented with the HINOTCOVE variable. Those with health insurance are under "Yes" and those without health insurance are under "No."
+
+We will test this hypothesis with an interaction model between health insurance coverage and highest education level attained.
+The test of our hypothesis will be:
+
+- $H_0:β3=0$
+- $H_A:β3≠0$
+
+$$ \hat{Lifespan} = β_0 +β_1(Education Level) + β_2(Health Insurance Coverage) + β_3(Education Level × Health Insurance Coverage) + β′X $$
+
+**Potential Confounders:**
+
+We suspect that demographic and socio-economic factors will be important to control for since they would be associated with both sexual orientation and with health. We will want to control variables such as race and sex, as these variables may all have an effect on lifespan, health insurance coverage, and education.
+
+**Exploratory Visualizations:**
+
+```{r}
+ggplot(filtered_data, aes(x = HINOTCOVE, y = Lifespan, fill = HINOTCOVE))+
+  geom_boxplot()
+```
+
+It seems that there is an effect of having health insurance on lifespan.
+
+```{r}
+ggplot(filtered_data, aes(x = education_category, y = Lifespan, fill = HINOTCOVE))+
+  geom_boxplot()
+```
+
+Based on this visualization, it seems that people with higher levels of education have greater lifespans.
+
+**Normality**
+```{r}
+model <- lm(formula = Lifespan ~ education_category * HINOTCOVE, data = filtered_data)
+
+```
+
+```{r}
+filtered_data <- mutate(filtered_data, Lifespan_hat = predict(model),
+                            residual = residuals(model))
+```
+
+```{r}
+ggplot(filtered_data, aes(x = residual))+
+  geom_histogram()+
+  facet_wrap(~education_category*HINOTCOVE)+
+  xlab("Residuals")
+```
+
+```{r}
+ggplot(filtered_data, aes(sample = residual))+
+  geom_qq()+
+  geom_qq_line()+
+  facet_wrap(~education_category*HINOTCOVE)
+```
+Based on these graphs, we can see that the strongest influence of normality is the HINOTCOVE(Health Insurance Status) variable. According to our data, when people do not have health insurance (HINOTCOVE:No), the data is normal. However, when people do have health insurance (HINOTCOVE), the data appears to be truncated. 
+
+We assume that this is so because those with health insurance tend to live longer. Therefore, the people with health insurance's data do not generally reach the upper bounds of their average expected lifespan.Because people with health insurance have longer lifespans, we are unable to predict their lifespans towards the upper part of the scale. However, because people without insurance tend to have shorter lifespans, we have more regular, normal data that gives us information about the longer lifespans of people without health insurance.
+
+**Linearity and Equal Variance**
+```{r}
+ggplot(filtered_data, aes(x = Lifespan_hat, y = residual, color = HINOTCOVE))+
+  geom_point()+
+  geom_hline(yintercept = 0, color = "red")
+```
+
+The residuals vs. width_hat plot shows us the degree of linearity and constant variance conditions in the data. It appears that the linearity assumption is slightly violated, as some of the data points fall beneath the zero line as we move from left to right across the graph. 
+
+The equal variance assumption does not appear to be met. We can see that there are more points clustered tightly together at the beginning and the end of the graph, rather than equally across the board.
+
+
+**Independence**
+According to our data, the independence assumption is not violated, as each person was only sampled once in the collected data. Therefore, no test subject's lifespan will influence another test subject's lifespan. Similarly, one's health insurance status or education level does not affect another's. 
+
+```{r}
+vif(model)
+```
+
+```{r}
+autoplot(model, which = 5, nrow=1)
+```
+
+```{r}
+slice(filtered_data, c(610, 697, 1002))
+```
+
+```{r}
+data_diagnostics <- ls.diag(model)
+
+
+filtered_data2 <- mutate(filtered_data, 
+                 leverage = data_diagnostics$hat,
+                 std_res = data_diagnostics$std.res,
+                 cooks = data_diagnostics$cooks
+                 )
+```
+
+```{r}
+x <- slice(filtered_data2, c(610, 697, 1002)) %>% 
+  arrange(desc(cooks))
+```
+
